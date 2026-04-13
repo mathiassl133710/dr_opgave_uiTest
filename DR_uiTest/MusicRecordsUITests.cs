@@ -185,6 +185,50 @@ public class MusicRecordsUITests : IDisposable
         Assert.Contains("Queen", artists);
     }
 
+    // --- Add record tests ---
+
+    [Fact]
+    public void AddForm_ShouldBeVisible_ForAdmin()
+    {
+        Login("admin", "password123!");
+        WaitForTableToLoad();
+
+        Assert.True(_driver.FindElement(By.Id("btn-add")).Displayed);
+    }
+
+    [Fact]
+    public void AddForm_ShouldNotBeVisible_ForRegularUser()
+    {
+        Login("mathias", "mathias123!");
+        WaitForTableToLoad();
+
+        Assert.Empty(_driver.FindElements(By.Id("btn-add")));
+    }
+
+    [Fact]
+    public void AddRecord_ShouldAppear_InTable()
+    {
+        Login("admin", "password123!");
+        WaitForTableToLoad();
+
+        var before = _driver.FindElements(By.CssSelector(".record-row")).Count;
+
+        _driver.FindElement(By.Id("add-title")).SendKeys("Test Song");
+        _driver.FindElement(By.Id("add-artist")).SendKeys("Test Artist");
+        _driver.FindElement(By.Id("add-duration")).SendKeys("180");
+        _driver.FindElement(By.Id("add-year")).SendKeys("2024");
+        _driver.FindElement(By.Id("btn-add")).Click();
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
+        wait.Until(d => d.FindElements(By.CssSelector(".record-row")).Count > before);
+
+        var titles = _driver.FindElements(By.CssSelector(".record-title"))
+                            .Select(el => el.Text)
+                            .ToList();
+
+        Assert.Contains("Test Song", titles);
+    }
+
     [Fact]
     public void SearchWithNoMatch_ShouldShow_EmptyTable()
     {
