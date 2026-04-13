@@ -129,11 +129,11 @@ public class MusicRecordsUITests : IDisposable
                             .Select(el => el.Text)
                             .ToList();
 
-        Assert.Contains("Bohemian Rhapsody", titles);
+        Assert.Contains("Hotel California", titles);
     }
 
     [Fact]
-    public void RecordsTable_ShouldContain_QueenAsArtist()
+    public void RecordsTable_ShouldContain_EaglesAsArtist()
     {
         Login();
         WaitForTableToLoad();
@@ -142,7 +142,7 @@ public class MusicRecordsUITests : IDisposable
                              .Select(el => el.Text)
                              .ToList();
 
-        Assert.Contains("Queen", artists);
+        Assert.Contains("Eagles", artists);
     }
 
     // --- Search tests ---
@@ -153,7 +153,7 @@ public class MusicRecordsUITests : IDisposable
         Login();
         WaitForTableToLoad();
 
-        _driver.FindElement(By.Id("search-title")).SendKeys("Bohemian");
+        _driver.FindElement(By.Id("search-title")).SendKeys("Hotel");
 
         var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
         wait.Until(d => d.FindElements(By.CssSelector(".record-title")).Count == 1);
@@ -163,7 +163,7 @@ public class MusicRecordsUITests : IDisposable
                             .ToList();
 
         Assert.Single(titles);
-        Assert.Contains("Bohemian Rhapsody", titles);
+        Assert.Contains("Hotel California", titles);
     }
 
     [Fact]
@@ -227,6 +227,76 @@ public class MusicRecordsUITests : IDisposable
                             .ToList();
 
         Assert.Contains("Test Song", titles);
+    }
+
+    // --- Edit tests ---
+
+    [Fact]
+    public void EditButtons_ShouldBeVisible_ForAdmin()
+    {
+        Login("admin", "password123!");
+        WaitForTableToLoad();
+
+        Assert.True(_driver.FindElements(By.CssSelector(".btn-edit")).Count > 0);
+    }
+
+    [Fact]
+    public void EditButtons_ShouldNotBeVisible_ForRegularUser()
+    {
+        Login("mathias", "mathias123!");
+        WaitForTableToLoad();
+
+        Assert.Empty(_driver.FindElements(By.CssSelector(".btn-edit")));
+    }
+
+    [Fact]
+    public void ClickEdit_ShouldShow_EditInputs()
+    {
+        Login("admin", "password123!");
+        WaitForTableToLoad();
+
+        _driver.FindElements(By.CssSelector(".btn-edit"))[0].Click();
+
+        Assert.True(_driver.FindElement(By.Id("edit-title")).Displayed);
+    }
+
+    [Fact]
+    public void SaveEdit_ShouldUpdate_RecordInTable()
+    {
+        Login("admin", "password123!");
+        WaitForTableToLoad();
+
+        _driver.FindElements(By.CssSelector(".btn-edit"))[0].Click();
+
+        var titleInput = _driver.FindElement(By.Id("edit-title"));
+        titleInput.Clear();
+        titleInput.SendKeys("Edited Title");
+
+        _driver.FindElement(By.CssSelector(".btn-save")).Click();
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
+        wait.Until(d => d.FindElements(By.CssSelector(".record-title"))
+            .Any(el => el.Text == "Edited Title"));
+
+        var titles = _driver.FindElements(By.CssSelector(".record-title"))
+                            .Select(el => el.Text).ToList();
+
+        Assert.Contains("Edited Title", titles);
+    }
+
+    [Fact]
+    public void CancelEdit_ShouldHide_EditInputs()
+    {
+        Login("admin", "password123!");
+        WaitForTableToLoad();
+
+        _driver.FindElements(By.CssSelector(".btn-edit"))[0].Click();
+        _driver.FindElement(By.CssSelector(".btn-cancel")).Click();
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
+        wait.Until(d => d.FindElements(By.CssSelector(".btn-edit")).Count > 0);
+
+        Assert.Empty(_driver.FindElements(By.Id("edit-title")));
     }
 
     // --- Delete tests ---
