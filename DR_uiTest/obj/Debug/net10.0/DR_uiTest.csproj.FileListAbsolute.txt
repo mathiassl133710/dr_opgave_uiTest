@@ -97,3 +97,4 @@
 /home/Mathias/teknologiOgProgramering/dr_opgave_uiTest/DR_uiTest/obj/Debug/net10.0/DR_uiTest.pdb
 /home/Mathias/teknologiOgProgramering/dr_opgave_uiTest/DR_uiTest/obj/Debug/net10.0/DR_uiTest.genruntimeconfig.cache
 /home/Mathias/teknologiOgProgramering/dr_opgave_uiTest/DR_uiTest/obj/Debug/net10.0/ref/DR_uiTest.dll
+/home/Mathias/teknologiOgProgramering/dr_opgave_uiTest/DR_uiTest/obj/Debug/net10.0/DR_uiTest.sourcelink.json
