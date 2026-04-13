@@ -1,4 +1,4 @@
-﻿using OpenQA.Selenium;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 
@@ -25,12 +25,21 @@ public class MusicRecordsUITests : IDisposable
         _driver.Dispose();
     }
 
+    private void Login(string username = "admin", string password = "password123!")
+    {
+        _driver.Navigate().GoToUrl(_webUrl);
+        _driver.FindElement(By.Id("input-username")).SendKeys(username);
+        _driver.FindElement(By.Id("input-password")).SendKeys(password);
+        _driver.FindElement(By.Id("btn-login")).Click();
+    }
+
     private void WaitForTableToLoad()
     {
         var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
         wait.Until(d => d.FindElements(By.Id("records-table")).Count > 0);
     }
 
+    // --- Login tests ---
 
     [Fact]
     public void PageTitle_ShouldBe_DRMusicRecords()
@@ -41,19 +50,53 @@ public class MusicRecordsUITests : IDisposable
     }
 
     [Fact]
-    public void RecordsTable_ShouldBeVisible_AfterLoad()
+    public void LoginForm_ShouldBeVisible_OnStart()
     {
         _driver.Navigate().GoToUrl(_webUrl);
+
+        Assert.True(_driver.FindElement(By.Id("btn-login")).Displayed);
+    }
+
+    [Fact]
+    public void Login_WithValidCredentials_ShowsRecordsTable()
+    {
+        Login();
         WaitForTableToLoad();
 
-        var table = _driver.FindElement(By.Id("records-table"));
-        Assert.True(table.Displayed);
+        Assert.True(_driver.FindElement(By.Id("records-table")).Displayed);
     }
+
+    [Fact]
+    public void Login_WithInvalidCredentials_ShowsError()
+    {
+        Login("admin", "wrongpassword");
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
+        wait.Until(d => d.FindElements(By.Id("login-error")).Count > 0);
+
+        Assert.True(_driver.FindElement(By.Id("login-error")).Displayed);
+    }
+
+    [Fact]
+    public void Logout_HidesTable_ShowsLoginForm()
+    {
+        Login();
+        WaitForTableToLoad();
+
+        _driver.FindElement(By.Id("btn-logout")).Click();
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
+        wait.Until(d => d.FindElements(By.Id("btn-login")).Count > 0);
+
+        Assert.True(_driver.FindElement(By.Id("btn-login")).Displayed);
+    }
+
+    // --- Records table tests ---
 
     [Fact]
     public void RecordsTable_ShouldHave_CorrectHeaders()
     {
-        _driver.Navigate().GoToUrl(_webUrl);
+        Login();
         WaitForTableToLoad();
 
         var headers = _driver.FindElements(By.CssSelector("#records-table thead th"))
@@ -69,17 +112,17 @@ public class MusicRecordsUITests : IDisposable
     [Fact]
     public void RecordsTable_ShouldHave_AtLeastOneRow()
     {
-        _driver.Navigate().GoToUrl(_webUrl);
+        Login();
         WaitForTableToLoad();
 
         var rows = _driver.FindElements(By.CssSelector("#records-table tbody .record-row"));
-        Assert.True(rows.Count > 0, "Expected at least one music record row in the table.");
+        Assert.True(rows.Count > 0);
     }
 
     [Fact]
     public void RecordsTable_ShouldContain_BohemianRhapsody()
     {
-        _driver.Navigate().GoToUrl(_webUrl);
+        Login();
         WaitForTableToLoad();
 
         var titles = _driver.FindElements(By.CssSelector(".record-title"))
@@ -92,7 +135,7 @@ public class MusicRecordsUITests : IDisposable
     [Fact]
     public void RecordsTable_ShouldContain_QueenAsArtist()
     {
-        _driver.Navigate().GoToUrl(_webUrl);
+        Login();
         WaitForTableToLoad();
 
         var artists = _driver.FindElements(By.CssSelector(".record-artist"))
@@ -102,10 +145,12 @@ public class MusicRecordsUITests : IDisposable
         Assert.Contains("Queen", artists);
     }
 
+    // --- Search tests ---
+
     [Fact]
     public void SearchByTitle_ShouldFilter_Results()
     {
-        _driver.Navigate().GoToUrl(_webUrl);
+        Login();
         WaitForTableToLoad();
 
         _driver.FindElement(By.Id("search-title")).SendKeys("Bohemian");
@@ -124,7 +169,7 @@ public class MusicRecordsUITests : IDisposable
     [Fact]
     public void SearchByArtist_ShouldFilter_Results()
     {
-        _driver.Navigate().GoToUrl(_webUrl);
+        Login();
         WaitForTableToLoad();
 
         _driver.FindElement(By.Id("search-artist")).SendKeys("Queen");
@@ -143,7 +188,7 @@ public class MusicRecordsUITests : IDisposable
     [Fact]
     public void SearchWithNoMatch_ShouldShow_EmptyTable()
     {
-        _driver.Navigate().GoToUrl(_webUrl);
+        Login();
         WaitForTableToLoad();
 
         _driver.FindElement(By.Id("search-title")).SendKeys("zzznomatch");
