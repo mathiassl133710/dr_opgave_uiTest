@@ -11,7 +11,7 @@ public class MusicRecordsUITests : IDisposable
 
     public MusicRecordsUITests()
     {
-        _webUrl = Environment.GetEnvironmentVariable("WEB_URL") ?? "http://localhost:5500";
+        _webUrl = Environment.GetEnvironmentVariable("WEB_URL") ?? "http://localhost:3000";
 
         var options = new FirefoxOptions();
 
@@ -100,5 +100,58 @@ public class MusicRecordsUITests : IDisposable
                              .ToList();
 
         Assert.Contains("Queen", artists);
+    }
+
+    [Fact]
+    public void SearchByTitle_ShouldFilter_Results()
+    {
+        _driver.Navigate().GoToUrl(_webUrl);
+        WaitForTableToLoad();
+
+        _driver.FindElement(By.Id("search-title")).SendKeys("Bohemian");
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
+        wait.Until(d => d.FindElements(By.CssSelector(".record-title")).Count == 1);
+
+        var titles = _driver.FindElements(By.CssSelector(".record-title"))
+                            .Select(el => el.Text)
+                            .ToList();
+
+        Assert.Single(titles);
+        Assert.Contains("Bohemian Rhapsody", titles);
+    }
+
+    [Fact]
+    public void SearchByArtist_ShouldFilter_Results()
+    {
+        _driver.Navigate().GoToUrl(_webUrl);
+        WaitForTableToLoad();
+
+        _driver.FindElement(By.Id("search-artist")).SendKeys("Queen");
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
+        wait.Until(d => d.FindElements(By.CssSelector(".record-artist")).Count == 1);
+
+        var artists = _driver.FindElements(By.CssSelector(".record-artist"))
+                             .Select(el => el.Text)
+                             .ToList();
+
+        Assert.Single(artists);
+        Assert.Contains("Queen", artists);
+    }
+
+    [Fact]
+    public void SearchWithNoMatch_ShouldShow_EmptyTable()
+    {
+        _driver.Navigate().GoToUrl(_webUrl);
+        WaitForTableToLoad();
+
+        _driver.FindElement(By.Id("search-title")).SendKeys("zzznomatch");
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
+        wait.Until(d => d.FindElements(By.CssSelector(".record-row")).Count == 0);
+
+        var rows = _driver.FindElements(By.CssSelector(".record-row"));
+        Assert.Empty(rows);
     }
 }
