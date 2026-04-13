@@ -229,6 +229,57 @@ public class MusicRecordsUITests : IDisposable
         Assert.Contains("Test Song", titles);
     }
 
+    // --- Delete tests ---
+
+    [Fact]
+    public void DeleteButtons_ShouldBeVisible_ForAdmin()
+    {
+        Login("admin", "password123!");
+        WaitForTableToLoad();
+
+        var deleteButtons = _driver.FindElements(By.CssSelector(".btn-delete"));
+        Assert.True(deleteButtons.Count > 0);
+    }
+
+    [Fact]
+    public void DeleteButtons_ShouldNotBeVisible_ForRegularUser()
+    {
+        Login("mathias", "mathias123!");
+        WaitForTableToLoad();
+
+        Assert.Empty(_driver.FindElements(By.CssSelector(".btn-delete")));
+    }
+
+    [Fact]
+    public void DeleteRecord_ShouldRemoveRow_FromTable()
+    {
+        Login("admin", "password123!");
+        WaitForTableToLoad();
+
+        // Add a temporary record first so we don't delete seed data
+        _driver.FindElement(By.Id("add-title")).SendKeys("Temp Delete Song");
+        _driver.FindElement(By.Id("add-artist")).SendKeys("Temp Artist");
+        _driver.FindElement(By.Id("add-duration")).SendKeys("100");
+        _driver.FindElement(By.Id("add-year")).SendKeys("2000");
+        _driver.FindElement(By.Id("btn-add")).Click();
+
+        var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
+        wait.Until(d => d.FindElements(By.CssSelector(".record-title"))
+            .Any(el => el.Text == "Temp Delete Song"));
+
+        var before = _driver.FindElements(By.CssSelector(".record-row")).Count;
+
+        // Find and click the delete button for the temp record
+        var rows = _driver.FindElements(By.CssSelector(".record-row"));
+        var tempRow = rows.First(r => r.FindElement(By.CssSelector(".record-title")).Text == "Temp Delete Song");
+        tempRow.FindElement(By.CssSelector(".btn-delete")).Click();
+
+        wait.Until(d => d.FindElements(By.CssSelector(".record-row")).Count < before);
+
+        var titles = _driver.FindElements(By.CssSelector(".record-title")).Select(el => el.Text).ToList();
+        Assert.DoesNotContain("Temp Delete Song", titles);
+    }
+
     [Fact]
     public void SearchWithNoMatch_ShouldShow_EmptyTable()
     {
